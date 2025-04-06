@@ -1,0 +1,75 @@
+import numpy as np
+from qiskit import QuantumCircuit, Aer, execute
+import random
+
+# Simulated "quantum tokenizer" - maps words to qubit states
+def quantum_tokenize(text, vocab_size=4, token_map=None):
+    """
+    Converts input text to a list of tokens based on predefined mappings.
+    If a word isn't found in the map, a random token from the vocabulary is assigned.
+    
+    Args:
+    text (str): The input text to tokenize.
+    vocab_size (int): The number of possible tokens.
+    token_map (dict): Optional predefined word-to-token mapping.
+
+    Returns:
+    list: A list of tokens.
+    """
+    if token_map is None:
+        token_map = {}  # No predefined mapping, fully open-ended
+
+    # Convert text to lowercase and split into words
+    words = text.lower().split()
+    
+    # Map words to tokens, using a random value if not found in the token_map
+    tokens = [token_map.get(word, random.randint(0, vocab_size - 1)) for word in words]
+    
+    return tokens
+
+# Simplified quantum attention mechanism (simplified)
+def quantum_attention(tokens, num_qubits=2):
+    """
+    A simplified quantum attention mechanism using quantum gates to encode
+    token information and compute quantum entanglement.
+
+    Args:
+    tokens (list): A list of token values (int).
+    num_qubits (int): Number of qubits in the quantum circuit.
+
+    Returns:
+    list: Measurement results (classical outcome of the quantum circuit).
+    """
+    # Create a quantum circuit with 'num_qubits' qubits and the same number of classical bits
+    circuit = QuantumCircuit(num_qubits, num_qubits)
+    
+    # Encode tokens as rotations on qubits
+    for i, token in enumerate(tokens):
+        angle = (token / 4) * np.pi  # Token value mapped to a rotation angle
+        circuit.ry(angle, i)  # Apply Ry rotation gate to qubit based on token
+    
+    # Entangle qubits using a controlled-X (CNOT) gate
+    if num_qubits > 1:
+        for i in range(num_qubits - 1):
+            circuit.cx(i, i + 1)  # Entangle consecutive qubits
+    
+    # Measure the qubits to get classical outcomes
+    circuit.measure(range(num_qubits), range(num_qubits))
+    
+    # Simulate the quantum circuit using the Aer simulator
+    simulator = Aer.get_backend('qasm_simulator')
+    job = execute(circuit, simulator, shots=1024)
+    
+    # Get the measurement results
+    result = job.result()
+    counts = result.get_counts(circuit)
+    
+    return counts
+
+# Example usage
+text = "hello quantum chaos randomness"
+tokens = quantum_tokenize(text)
+print("Tokens:", tokens)
+
+measurement_results = quantum_attention(tokens, num_qubits=5)
+print("Measurement results:", measurement_results)
